@@ -41,8 +41,9 @@ import glob                     # biblioteca para acessar arquivos facilmente
 from sklearn.neighbors import KNeighborsClassifier # biblioteca para treinar KNN
 sns.set()
 
+# USTC dataset
 columns=["Address A","Port A","Address B","Port B","Packets","Bytes","Packets A → B","Bytes A → B","Packets B → A","Bytes B → A","Rel Start","Duration","Bits/s A → B","Bits/s B → A"]
-data = pd.DataFrame(columns=columns)
+ustc = pd.DataFrame(columns=columns)
 
 print(glob.glob("*/"))
 print(glob.glob("Benign/*"))
@@ -51,8 +52,7 @@ print(glob.glob("Malware/*"))
 for path in glob.glob("*/"):
     for file in glob.glob(path+"*.csv"):
     #for file in glob.glob(path+"*_TCP.csv"):
-        temp = pd.read_csv(file, #index_col=0,
-                                 dtype={'Address A':str,
+        temp = pd.read_csv(file, dtype={'Address A':str,
                                         'Port A':int,
                                         'Address B':str,
                                         'Port B':int,
@@ -78,14 +78,80 @@ for path in glob.glob("*/"):
         ## Características gerais do dataset
         print("O conjunto de dados "+file+" possui {} linhas e {} colunas".format(temp.shape[0], temp.shape[1]))
 
-        data = pd.concat([data,temp.iloc[1:]])
-        #data.reset_index(inplace=True) # reinicia indexacao apos concatenar diferentes dataframes
-        #print(data.head())
-        #print(data.iloc[7516:])
-        #print(data.tail())
+        ustc = pd.concat([ustc,temp.iloc[1:]])
+        #ustc.reset_index(inplace=True) # reinicia indexacao apos concatenar diferentes dataframes
+        #print(ustc.head())
+        #print(ustc.iloc[7516:])
+        #print(ustc.tail())
+
+print(ustc.head())
+print(ustc.tail())
+
+ustc.reset_index(inplace=True) # reinicia indexacao apos concatenar diferentes dataframes
+ustc = ustc.drop(columns=['index'])
+
+ustc.columns = ustc.columns.str.replace(' ', '') # elimina espaçamentos nos nomes dos atributos
+ustc = ustc[["AddressA","PortA","AddressB","PortB","BytesA→B","Duration","Malware"]]
+
+print(ustc.head())
+print(ustc.tail())
+
+# ISCX dataset
+file="ISCXTor2016_TOR-NonTOR.csv"
+iscx = pd.read_csv(file, dtype={'Source IP':str,
+                                'Source Port':int,
+                                'Destination IP':str,
+                                'Destination Port':int,
+                                'Protocol':int,
+                                'Flow Duration':int,
+                                'Flow Bytes/s':float,
+                                'Flow Packets/s':float,
+                                'Flow IAT Mean':float,
+                                'Flow IAT Std':float,
+                                'Flow IAT Max':float,
+                                'Flow IAT Min':float,
+                                'Fwd IAT Mean':float,
+                                'Fwd IAT Std':float,
+                                'Fwd IAT Max':float,
+                                'Fwd IAT Min':float,
+                                'Bwd IAT Mean':float, 
+                                'Bwd IAT Std':float,
+                                'Bwd IAT Max':float,
+                                'Bwd IAT Min':float,
+                                'Active Mean':int, 
+                                'Active Std':int, 
+                                'Active Max':int, 
+                                'Active Min':int,
+                                'Idle Mean':int, 
+                                'Idle Std':int, 
+                                'Idle Max':int, 
+                                'Idle Min':int,
+                                'label':str},)
+
+iscx = iscx.replace('nonTOR',0.0, regex=True)
+iscx = iscx.replace('TOR',1.0, regex=True)
+
+iscx.columns = iscx.columns.str.replace(' ', '') # elimina espaçamentos nos nomes dos atributos
+
+print(iscx.head())
+print(iscx.tail())
+
+#iscx = iscx[["Source IP","Source Port","Destination IP","Destination Port","Flow Bytes/s","Flow Duration","label"]]
+
+iscx = iscx[['SourceIP','SourcePort','DestinationIP','DestinationPort','FlowBytes/s','FlowDuration','label']]
+iscx=iscx.rename(columns={'SourceIP':'AddressA',
+                     'SourcePort':'PortA',
+                     'DestinationIP':'AddressB',
+                     'DestinationPort':'PortB',
+                     'FlowBytes/s':'BytesA→B',
+                     'FlowDuration':"Duration",
+                     'label':'Malware'})
+
+print(iscx.head())
+print(iscx.tail())
 
 
-data = data.drop(columns=['Address A', 'Address B'])
+data = pd.concat([ustc,iscx.iloc[1:]]) # concatena ambos datasets
 
 data.reset_index(inplace=True) # reinicia indexacao apos concatenar diferentes dataframes
 data = data.drop(columns=['index'])
@@ -97,12 +163,13 @@ print("O conjunto de dados completo possui {} linhas e {} colunas".format(data.s
 data.columns = data.columns.str.replace(' ', '') # elimina espaçamentos nos nomes dos atributos
 
 print(data.head())
+print(data.iloc[379830:])
 print(data.tail())
 
 #data.AddressA=int(ipaddress.ip_address(data.AddressA))
-#for i in (range(data.shape[0])):
-    #data.at[i, 'AddressA'] = int(ipaddress.ip_address(data.at[i, 'AddressA'])) # converte IP para inteiro
-    #data.at[i, 'AddressB'] = int(ipaddress.ip_address(data.at[i, 'AddressB'])) # converte IP para inteiro
+for i in (range(data.shape[0])):
+    data.at[i, 'AddressA'] = int(ipaddress.ip_address(data.at[i, 'AddressA'])) # converte IP para inteiro
+    data.at[i, 'AddressB'] = int(ipaddress.ip_address(data.at[i, 'AddressB'])) # converte IP para inteiro
     #print("AddressA i="+str(i)+" IP="+data.at[i, 'AddressA']+" int="+str(int(ipaddress.ip_address(data.at[i, 'AddressA'])))) 
     #print("AddressB i="+str(i)+" IP="+data.at[i, 'AddressB']+" int="+str(int(ipaddress.ip_address(data.at[i, 'AddressB'])))) 
 

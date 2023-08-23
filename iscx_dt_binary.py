@@ -41,7 +41,7 @@ import glob                     # biblioteca para acessar arquivos facilmente
 from sklearn.neighbors import KNeighborsClassifier # biblioteca para treinar KNN
 sns.set()
 
-file="TOR-NonTOR.csv"
+file="ISCXTor2016_TOR-NonTOR.csv"
 data = pd.read_csv(file, dtype={'Source IP':str,
                                 'Source Port':int,
                                 'Destination IP':str,
@@ -214,6 +214,8 @@ Modifique-o de forma a obter a acurácia para cada execução e então calcule a
 
 """
 
+from sklearn.metrics import recall_score
+
 n_repeats = 20
 accuracies = []
 
@@ -233,7 +235,8 @@ for split_random_state in range(0, n_repeats):
   # ...
   y_pred = dt.predict(X_test)
   accuracy = accuracy_score(y_test, y_pred)
-  print("Acurácia nos dados de teste: %.3f" % accuracy)
+  recall = recall_score(y_test, y_pred)
+  print("Acurácia/Recall nos dados de teste: %.3f %.3f" % (accuracy,recall))
 
   accuracies.append(accuracy)
 

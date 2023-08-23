@@ -67,10 +67,32 @@ for path in glob.glob("*/"):
                                         'Bits/s A → B':float,
                                         'Bits/s B → A':float},)
     
-        if(path[0]=='M'): # Se esta na pasta Malware
-            temp.insert(temp.shape[1], "Malware", np.ones(temp.shape[0]))
-        else:
-            temp.insert(temp.shape[1], "Malware", np.zeros(temp.shape[0]))
+        appname=file
+        appname=appname.replace("Malware/", "")
+        appname=appname.replace("Benign/", "")
+        appname=appname.replace("_TCP.csv", "")
+        appname=appname.replace("_UDP.csv", "")
+
+        apptype=None
+
+        match appname:
+            case "MySQL" | "Weibo":
+                apptype="CHAT"
+            case "FTP" | "SMB":
+                apptype="FILE-TRANSFER"
+            case "Gmail" | "Outlook":
+                apptype="MAIL"
+            case "BitTorrent":
+                apptype="P2P"
+            case "WorldOfWarcraft":
+                apptype="Video"
+            case "Facetime" | "Skype":
+                apptype="VOIP"
+            case _:
+                apptype="MALWARE"
+
+
+        temp.insert(temp.shape[1], "App", [apptype for x in range(temp.shape[0])])
 
         #print(temp.head())  # para visualizar apenas as 5 primeiras linhas
         #print(temp.tail())  # para visualizar apenas as 5 ultimas linhas
@@ -91,13 +113,13 @@ ustc.reset_index(inplace=True) # reinicia indexacao apos concatenar diferentes d
 ustc = ustc.drop(columns=['index'])
 
 ustc.columns = ustc.columns.str.replace(' ', '') # elimina espaçamentos nos nomes dos atributos
-ustc = ustc[["AddressA","PortA","AddressB","PortB","BytesA→B","Duration","Malware"]]
+ustc = ustc[["AddressA","PortA","AddressB","PortB","BytesA→B","Duration","App"]]
 
 print(ustc.head())
 print(ustc.tail())
 
 # ISCX dataset
-file="ISCXTor2016_TOR-NonTOR.csv"
+file="ISCXTor2016_apps.csv"
 iscx = pd.read_csv(file, dtype={'Source IP':str,
                                 'Source Port':int,
                                 'Destination IP':str,
@@ -128,9 +150,6 @@ iscx = pd.read_csv(file, dtype={'Source IP':str,
                                 'Idle Min':int,
                                 'label':str},)
 
-iscx = iscx.replace('nonTOR',0.0, regex=True)
-iscx = iscx.replace('TOR',1.0, regex=True)
-
 iscx.columns = iscx.columns.str.replace(' ', '') # elimina espaçamentos nos nomes dos atributos
 
 print(iscx.head())
@@ -145,7 +164,7 @@ iscx=iscx.rename(columns={'SourceIP':'AddressA',
                      'DestinationPort':'PortB',
                      'FlowBytes/s':'BytesA→B',
                      'FlowDuration':"Duration",
-                     'label':'Malware'})
+                     'label':'App'})
 
 print(iscx.head())
 print(iscx.tail())
@@ -216,7 +235,7 @@ X = data.iloc[:, :-1].values  # matriz contendo os atributos
 y = data.iloc[:, data.shape[1]-1].values  # vetor contendo a classe (0 para maligno e 1 para benigno) de cada instância
 #feature_names = columns #data.feature_names  # nome de cada atributo
 feature_names = data.columns.tolist() #data.feature_names  # nome de cada atributo
-target_names = ["0.0", "1.0"]  # nome de cada classe
+target_names = ["AUDIO", "BROWSING", "CHAT", "FILE-TRANSFER", "MAIL", "P2P", "VIDEO", "VOIP", "MALWARE"]  # nome de cada classe
 
 
 print(f"Dimensões de X: {X.shape}\n")
@@ -230,13 +249,8 @@ print(f"Nomes das classes: {target_names}")
 É possível também contar quantos exemplos pertencem à classe dos tumores malignos e quantos à classe dos benignos
 """
 
-import numpy as np
-
-n_malign = np.sum(y == 0)
-n_benign = np.sum(y == 1)
-
-print("Número de exemplos malignos: %d" % n_malign)
-print("Número de exemplos benignos: %d" % n_benign)
+for apptype in target_names:
+    print("Número de exemplos %s: %d" % (apptype, np.sum(y == apptype)))
 
 """## Variância nas Árvores de Decisão
 

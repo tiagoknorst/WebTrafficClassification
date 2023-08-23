@@ -51,8 +51,8 @@ print(glob.glob("Malware/*"))
 apps=[]
 
 for path in glob.glob("*/"):
-    #for file in glob.glob(path+"*.csv"):
-    for file in glob.glob(path+"*_TCP.csv"):
+    for file in glob.glob(path+"*.csv"):
+    #for file in glob.glob(path+"*_TCP.csv"):
         temp = pd.read_csv(file, #index_col=0,
                                  dtype={'Address A':str,
                                         'Port A':int,
@@ -74,7 +74,9 @@ for path in glob.glob("*/"):
         appname=appname.replace("Benign/", "")
         appname=appname.replace("_TCP.csv", "")
         appname=appname.replace("_UDP.csv", "")
-        apps.append(appname)
+        
+        if appname not in apps:
+            apps.append(appname)
 
         temp.insert(temp.shape[1], "App", [appname for x in range(temp.shape[0])])
 
